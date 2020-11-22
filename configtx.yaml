@@ -1,0 +1,204 @@
+Organizations:
+
+  - &OrdererOrg
+    Name: OrderingService
+    ID: OrdererMSP
+    MSPDir: crypto-config/ordererOrganizations/archive-network.com/msp
+    
+    Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrdererMSP.admin')"
+
+    OrdererEndpoints:
+            - orderer.archive-network.com:7050
+
+  - &TenderCommittee
+    Name: TenderCommitteeMSP
+    ID: TenderCommitteeMSP
+    MSPDir: crypto-config/peerOrganizations/tendercom.archive-network.com/msp
+    Policies:
+          Readers:
+              Type: Signature
+              Rule: "OR('TenderCommitteeMSP.admin', 'TenderCommitteeMSP.peer', 'TenderCommitteeMSP.client')"
+          Writers:
+              Type: Signature
+              Rule: "OR('TenderCommitteeMSP.admin', 'TenderCommitteeMSP.client')"
+          Admins:
+              Type: Signature
+              Rule: "OR('TenderCommitteeMSP.admin')" 
+          Endorsement:
+              Type: Signature
+              Rule: "OR('TenderCommitteeMSP.peer')"     
+
+    AnchorPeers:
+      - Host: peer0.tendercom.archive-network.com
+        Port: 7051
+
+  - &Procurement
+    Name: ProcurementMSP
+    ID: ProcurementMSP
+    MSPDir: crypto-config/peerOrganizations/procu.archive-network.com/msp
+    Policies:
+          Readers:
+              Type: Signature
+              Rule: "OR('ProcurementMSP.admin', 'ProcurementMSP.peer', 'ProcurementMSP.client')"
+          Writers:
+              Type: Signature
+              Rule: "OR('ProcurementMSP.admin', 'ProcurementMSP.client')"
+          Admins:
+              Type: Signature
+              Rule: "OR('ProcurementMSP.admin')" 
+          Endorsement:
+              Type: Signature
+              Rule: "OR('ProcurementMSP.peer')" 
+
+    AnchorPeers:
+      - Host: peer0.procu.archive-network.com
+        Port: 7051
+
+  - &Tenderer
+    Name: TendererMSP
+    ID: TendererMSP
+    MSPDir: crypto-config/peerOrganizations/tenderer.archive-network.com/msp
+    Policies:
+          Readers:
+              Type: Signature
+              Rule: "OR('TendererMSP.admin', 'TendererMSP.peer', 'TendererMSP.client')"
+          Writers:
+              Type: Signature
+              Rule: "OR('TendererMSP.admin', 'TendererMSP.client')"
+          Admins:
+              Type: Signature
+              Rule: "OR('TendererMSP.admin')" 
+          Endorsement:
+              Type: Signature
+              Rule: "OR('TendererMSP.peer')" 
+
+    AnchorPeers:
+      - Host: peer0.tenderer.archive-network.com
+        Port: 7051
+
+Capabilities:
+
+    Channel: &ChannelCapabilities
+
+        V2_0: true
+
+
+    Orderer: &OrdererCapabilities
+    
+        V2_0: true
+
+    Application: &ApplicationCapabilities
+
+        V2_0: true
+# Orderer
+
+Orderer: &OrdererDefaults
+
+    OrdererType: solo
+    Addresses: 
+        - orderer.archive-network.com:7050
+    BatchTimeout: 2s
+    BatchSize:
+        MaxMessageCount: 10
+        AbsoluteMaxBytes: 99 MB
+        PreferredMaxBytes: 512 KB
+    Kafka:
+        Brokers: 
+            - 127.0.0.1:9092
+
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        BlockValidation:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+Channel: &ChannelDefaults
+
+    Policies:
+
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+
+
+    Capabilities:
+        <<: *ChannelCapabilities
+# Application
+
+Application: &ApplicationDefaults
+
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        LifecycleEndorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+        Endorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+
+    Capabilities:
+        <<: *ApplicationCapabilities
+
+Profiles:
+    OrdererGenesis:
+      <<: *ChannelDefaults
+      Capabilities:
+        <<: *ChannelCapabilities
+      Orderer:
+        <<: *OrdererDefaults
+        Organizations:
+          - *OrdererOrg
+        Capabilities:
+          <<: *OrdererCapabilities
+      Consortiums:
+        MyFirstConsortium:
+          Organizations:
+            - *TenderCommittee 
+            - *Procurement
+            - *Tenderer
+            
+    TenderChannel:
+      Consortium: MyFirstConsortium
+      <<: *ChannelDefaults
+      Application:
+        <<: *ApplicationDefaults
+        Organizations:
+          - *TenderCommittee
+          - *Procurement
+          - *Tenderer
+          
+        Capabilities:
+          <<: *ApplicationCapabilities

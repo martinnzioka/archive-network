@@ -1,0 +1,79 @@
+version: '2'
+
+volumes:
+  orderer.archive-network.com:
+  peer0.tendercom.archive-network.com:
+  peer0.procu.archive-network.com:
+  peer0.tenderer.archive-network.com:
+
+networks:
+  archive:
+
+services:
+
+  orderer.archive-network.com:
+    extends:
+      file:   base/docker-compose-base.yaml
+      service: orderer.archive-network.com
+    container_name: orderer.archive-network.com
+    networks:
+      - archive
+
+  peer0.tendercom.archive-network.com:
+    container_name: peer0.tendercom.archive-network.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.tendercom.archive-network.com
+    networks:
+      - archive
+
+  peer0.procu.archive-network.com:
+    container_name: peer0.procu.archive-network.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.procu.archive-network.com
+    networks:
+      - archive
+
+  peer0.tenderer.archive-network.com:
+    container_name: peer0.tenderer.archive-network.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.tenderer.archive-network.com
+    networks:
+      - archive
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools
+    tty: true
+    stdin_open: true
+    environment:
+      - SYS_CHANNEL=$SYS_CHANNEL
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      #- FABRIC_LOGGING_SPEC=DEBUG
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.tendercom.archive-network.com:7051
+      - CORE_PEER_LOCALMSPID=TenderCommitteeMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/opt/gopath/fabric-samples/archive-network/crypto/peerOrganizations/tendercom.archive-network.com/peers/peer0.tendercom.archive-network.com/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/opt/gopath/fabric-samples/archive-network/crypto/peerOrganizations/tendercom.archive-network.com/peers/peer0.tendercom.archive-network.com/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/fabric-samples/archive-network/crypto/peerOrganizations/tendercom.archive-network.com/peers/peer0.tendercom.archive-network.com/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/fabric-samples/archive-network/crypto/peerOrganizations/tendercom.archive-network.com/users/Admin@tendercom.archive-network.com/msp
+    working_dir: /opt/gopath/fabric-samples/archive-network
+    command: /bin/bash
+    volumes:
+        - /var/run/:/host/var/run/
+        - /chaincode/:/opt/gopath/src/github.com/chaincode
+        - /crypto-config:/opt/gopath/fabric-samples/archive-network/crypto/
+        - /scripts:/opt/gopath/fabric-samples/archive-network/scripts/
+        - /channel-artifacts:/opt/gopath/fabric-samples/archive-network/channel-artifacts
+    depends_on:
+      - orderer.archive-network.com
+      - peer0.tendercom.archive-network.com
+      - peer0.procu.archive-network.com
+      - peer0.tenderer.archive-network.com
+    networks:
+      - archive

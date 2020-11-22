@@ -1,0 +1,33 @@
+OrdererOrgs:
+  - Name: OrderingService
+    Domain: archive-network.com
+    Specs:
+      - Hostname: orderer
+
+PeerOrgs:
+  - Name: TenderCommittee
+    Domain: tendercom.archive-network.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+
+    Users: 
+      Count: 1
+      
+  - Name: Procurement
+    Domain: procu.archive-network.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+
+    Users: 
+      Count: 1
+
+  - Name: Tenderer
+    Domain: tenderer.archive-network.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+
+    Users: 
+      Count: 1
